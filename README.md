@@ -1,70 +1,95 @@
-# Getting Started with Create React App
+CarbonCredit Marketplace
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Overview
 
-## Available Scripts
+The CarbonCredit Marketplace is a decentralized energy trading platform where dealers and consumers can buy and sell renewable energy using ERC20-based CarbonCredits. The platform leverages IoT (Internet of Things) for energy measurement, zk-SNARKs with Poseidon Hash for validation, and on-chain randomness (VRF) for fair seller selection.
 
-In the project directory, you can run:
+Key Features
 
-### `npm start`
+1. Registration and Authentication
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Users sign up or log in using MetaMask.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+If already registered, users are redirected to their respective dashboard.
 
-### `npm test`
+New users must register as either a Dealer or Consumer before proceeding.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+2. Energy and Carbon Credit Trading Mechanism
 
-### `npm run build`
+a. Dealers:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Can sell Energy or CarbonCredits.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+When selling Energy, they must specify:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Minimum Price
 
-### `npm run eject`
+Maximum Price
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Quantity of energy available for sale.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+When selling CarbonCredits, they must specify:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Quantity of credits required.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+b. Consumers:
 
-## Learn More
+Can place a buy order for Energy by specifying:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Minimum Price
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Maximum Price
 
-### Code Splitting
+Quantity required.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+3. Carbon Credit Minting & Deduction
 
-### Analyzing the Bundle Size
+Energy generation and transfer are monitored through IoT devices.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Based on renewable energy generation, CarbonCredits are minted into a dealer's account.
 
-### Making a Progressive Web App
+When selling energy, the equivalent CarbonCredits are deducted from the dealer’s account.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+4. Verification Using zk-SNARKs (Poseidon Hash)
 
-### Advanced Configuration
+Ensures that:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+The Dealer has the required energy or CarbonCredits to sell.
 
-### Deployment
+The Consumer does not make entry exceeding the maximum energy limit they can purchase.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+5. Order Matching and Execution
 
-### `npm run build` fails to minify
+For each buy order, all eligible sellers (who match the price range and energy quantity criteria) are identified.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+The system employs on-chain randomness (VRF) to fairly select one seller.
+
+The transaction is then committed on-chain.
+
+6. Transaction Execution
+
+The final transaction price is determined as the average of the overlapping price range.
+
+The platform ensures the secure transfer of energy and payment.
+
+Gas fee estimator is used to optimize transaction costs.
+
+Notifications are sent to both parties regarding transaction completion.
+
+Technologies Used
+
+Ethereum Smart Contracts (ERC20 for CarbonCredits)
+
+IoT-based Energy Monitoring
+
+zk-SNARKs (Poseidon Hash) for verification
+
+Chainlink VRF for fair seller selection
+
+Gas Fee Estimator for transaction cost optimization
+
+MetaMask Integration for authentication
+
+Conclusion
+
+The CarbonCredit Marketplace facilitates a transparent and decentralized energy trading ecosystem by leveraging blockchain, IoT, and zero-knowledge proofs. It ensures fair trading, enhances renewable energy adoption, and promotes sustainability through CarbonCredits.

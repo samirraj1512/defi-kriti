@@ -93,33 +93,43 @@ class TradeMatchingService:
                 
         return active_orders
 
-    async def initiate_matching(self, buy_order_id: int) -> bool:
-        """Initiate the onchain matching process."""
-        try:
-            eligible_sellers = self.find_matching_orders(buy_order_id)
-            if not eligible_sellers:
-                return False
-
-            # Request onchain matching with randomness
-            tx = self.trade_matcher.functions.requestMatch(
-                buy_order_id,
-                eligible_sellers
-            ).build_transaction({
-                'from': self.w3.eth.accounts[0],
-                'nonce': self.w3.eth.get_transaction_count(self.w3.eth.accounts[0])
-            })
-            
-            # Sign and send transaction
-            signed_tx = self.w3.eth.account.sign_transaction(tx, private_key='YOUR_PRIVATE_KEY')
-            tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
-            
-            # Wait for transaction confirmation
-            tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
-            return tx_receipt.status == 1
-            
-        except Exception as e:
-            print(f"Error initiating match for order {buy_order_id}: {e}")
+async def initiate_matching(self, buy_order_id: int) -> bool:
+    """Initiate the on-chain matching process."""
+    try:
+        eligible_sellers = self.find_matching_orders(buy_order_id)
+        
+        if not eligible_sellers:
+            print(f"No eligible sellers found for buy order {buy_order_id}")
             return False
+
+        print(f"Matching buy order {buy_order_id} with eligible sell orders: {eligible_sellers}")
+
+        # Get sender account
+        sender_account = self.w3.eth.accounts[0]
+        nonce = self.w3.eth.get_transaction_count(sender_account)
+
+        # Build transaction
+        tx = self.trade_matcher.functions.requestMatch(
+            buy_order_id, eligible_sellers
+        ).build_transaction({
+            'from': sender_account,
+            'nonce': nonce,
+            'gas': 500000,  # Adjust gas limit
+            'gasPrice': self.w3.eth.gas_price
+        })
+        
+        # Sign and send transaction
+        signed_tx = self.w3.eth.account.sign_transaction(tx, private_key='YOUR_PRIVATE_KEY')
+        tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+
+        # Wait for confirmation
+        tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
+        return tx_receipt.status == 1
+
+    except Exception as e:
+        print(f"Error initiating match for order {buy_order_id}: {e}")
+        return False
+
 
 class TradeProcessor:
     def __init__(self, matching_service: TradeMatchingService):
