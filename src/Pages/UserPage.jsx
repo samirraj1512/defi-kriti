@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
 import { useUser } from '@clerk/clerk-react';
 import { RedirectToSignIn } from '@clerk/clerk-react';
+import Web3 from 'web3';
+import OrderBook from '../contracts/OrderBook.json';
 const TransactionHistory = () => {
     const transactions = [
         "Transaction 1: Qty. 1, Price $10",
@@ -34,19 +36,50 @@ const TransactionHistory = () => {
 };
 
 const UserPage = () => {
-    const { user } = useUser();
-  // State hooks for the inputs
+  const { user } = useUser();
+  // console.log(user?.primaryWeb3Wallet.web3Wallet);
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [qty, setQty] = useState('');
+
+
+async function interact() {
+  if (!window.ethereum) {
+    console.error("No Ethereum wallet detected!");
+    return;
+  }
+  try {
+    let web3;
+    if (window.ethereum) {
+      web3 = new Web3(window.ethereum); // Use MetaMask or injected wallet
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+  } else {
+      web3 = new Web3(new Web3.providers.HttpProvider(process.env.REACT_APP_CHAIN_LINK)); // Fallback for read-only operations
+  }
+  const deployedAddress = process.env.REACT_APP_ORDER_BOOK_ADDRESS
+const myContract = new web3.eth.Contract(OrderBook , deployedAddress);
+myContract.handleRevert = true;
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+    const salt = Web3.utils.padLeft(user?.primaryWeb3Wallet.web3Wallet, 64);
+    const nullBytes32 = "0x0000000000000000000000000000000000000000000000000000000000000000";
+    const receipt = await myContract.methods.createOrder(qty, minPrice, maxPrice, salt, nullBytes32, true, 0).send({
+      from: accounts[0]
+   });   
+    console.log(receipt);
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+  // State hooks for the inputs
+
 
   if (!user) return <RedirectToSignIn to="/" />;
   // Function to handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Minimum Price:", minPrice);
-    console.log("Maximum Price:", maxPrice);
-    console.log("Quantity:", qty);
+   interact();
   };
 
   return (

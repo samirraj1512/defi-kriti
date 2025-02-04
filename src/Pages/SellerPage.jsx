@@ -1,26 +1,98 @@
 import React, { useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { RedirectToSignIn } from '@clerk/clerk-react';
-import { CarbonCredit,CarbonMarketplace,TradeMatching,OrderBook,CarbonTrading} from "../contract"
-
+import { CarbonCredit, CarbonMarketplace, TradeMatching, CarbonTrading } from "../contract"
+import Web3 from 'web3';
+import OrderBook from '../contracts/OrderBook.json';
 const SellerPage = () => {
-    const { user } = useUser();
-    
-    // Declare all hooks unconditionally
-    const [activeTab, setActiveTab] = useState('energy');
-    const [energyMinPrice, setEnergyMinPrice] = useState('');
-    const [energyMaxPrice, setEnergyMaxPrice] = useState('');
-    const [energyQty, setEnergyQty] = useState('');
-    const [carbonAction, setCarbonAction] = useState('Buy');
-    const [carbonQty, setCarbonQty] = useState('');
-  
-    // Now perform the conditional check
-    if (!user) return <RedirectToSignIn to="/" />;
-    
-    // ...rest of your component
-  
+  const { user } = useUser();
+  const [activeTab, setActiveTab] = useState('energy');
+  const [energyMinPrice, setEnergyMinPrice] = useState('');
+  const [energyMaxPrice, setEnergyMaxPrice] = useState('');
+  const [energyQty, setEnergyQty] = useState('');
+  const [carbonAction, setCarbonAction] = useState('Buy');
+  const [carbonQty, setCarbonQty] = useState('');
+  async function interact() {
+    if (!window.ethereum) {
+      console.error("No Ethereum wallet detected!");
+      return;
+    }
+    try {
+      let web3;
+      if (window.ethereum) {
+        web3 = new Web3(window.ethereum); // Use MetaMask or injected wallet
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+      } else {
+        web3 = new Web3(new Web3.providers.HttpProvider(process.env.REACT_APP_CHAIN_LINK)); // Fallback for read-only operations
+      }
+      const deployedAddress = process.env.REACT_APP_ORDER_BOOK_ADDRESS
+      const myContract = new web3.eth.Contract(OrderBook, deployedAddress);
+      myContract.handleRevert = true;
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      const salt = Web3.utils.padLeft(user?.primaryWeb3Wallet.web3Wallet, 64);
+      let curr = carbonAction === 'Buy' ? true : false;
+      const nullBytes32 = "0x0000000000000000000000000000000000000000000000000000000000000000";
+      // const payload = {
+      //   qty:energyQty,
+      //   minPrice:energyMinPrice,
+      //   maxPrice:energyMaxPrice,
+      //   salt:salt,
+      //   nullBytes32,
+      //   false,
+      //   curr
+      // }
+      const receipt = await myContract.methods.createOrder(energyQty, energyMinPrice, energyMaxPrice, salt, nullBytes32, curr, 0).send({
+        from: accounts[0]
+      });
+      console.log(receipt);
+      energyQty = '';
+      energyMinPrice = '';
+      energyMaxPrice = ''
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  async function interact2() {
+    if (!window.ethereum) {
+      console.error("No Ethereum wallet detected!");
+      return;
+    }
+    try {
+      let web3;
+      if (window.ethereum) {
+        web3 = new Web3(window.ethereum); // Use MetaMask or injected wallet
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+      } else {
+        web3 = new Web3(new Web3.providers.HttpProvider(process.env.REACT_APP_CHAIN_LINK)); // Fallback for read-only operations
+      }
+      const deployedAddress = process.env.REACT_APP_ORDER_BOOK_ADDRESS
+      const myContract = new web3.eth.Contract(OrderBook, deployedAddress);
+      myContract.handleRevert = true;
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      const salt = Web3.utils.padLeft(user?.primaryWeb3Wallet.web3Wallet, 64);
+      let curr = activeTab === 'energy' ? 0 : 1;
+      const nullBytes32 = "0x0000000000000000000000000000000000000000000000000000000000000000";
+      // const payload = {
+      //   qty:energyQty,
+      //   minPrice:energyMinPrice,
+      //   maxPrice:energyMaxPrice,
+      //   salt:salt,
+      //   nullBytes32,
+      //   false,
+      //   curr
+      // }
+      const receipt = await myContract.methods.createOrder(energyQty, energyMinPrice, energyMaxPrice, salt, nullBytes32, false, 1).send({
+        from: accounts[0]
+      });
+      console.log(receipt);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  if (!user) return <RedirectToSignIn to="/" />;
 
-  // Hardcoded balances (could come from props or an API)
   const energyBalance = 1000; // e.g. in kWh
   const carbonBalance = 500;  // e.g. in credits
 
@@ -55,45 +127,38 @@ const SellerPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (activeTab === 'energy') {
-      console.log("Energy Sell Order:");
-      console.log("Minimum Price:", energyMinPrice);
-      console.log("Maximum Price:", energyMaxPrice);
-      console.log("Quantity:", energyQty);
+      interact();
     } else {
-      console.log("Carbon Credits Order:");
-      console.log("Action:", carbonAction);
-      console.log("Quantity:", carbonQty);
+      interact2()
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-gray-100 to-blue-100 p-5">
       <h1 className="text-3xl font-bold mb-8">Seller Dashboard</h1>
-      
+
       {/* Tab Navigation */}
       <div className="mb-6 flex space-x-4">
         <button
-          className={`px-4 py-2 rounded ${
-            activeTab === 'energy'
+          className={`px-4 py-2 rounded ${activeTab === 'energy'
               ? 'bg-blue-600 text-white'
               : 'bg-white text-blue-600 border border-blue-600'
-          }`}
+            }`}
           onClick={() => setActiveTab('energy')}
         >
           Energy
         </button>
         <button
-          className={`px-4 py-2 rounded ${
-            activeTab === 'carbon'
+          className={`px-4 py-2 rounded ${activeTab === 'carbon'
               ? 'bg-blue-600 text-white'
               : 'bg-white text-blue-600 border border-blue-600'
-          }`}
+            }`}
           onClick={() => setActiveTab('carbon')}
         >
           Carbon Credits
         </button>
       </div>
-      
+
       <div className="flex gap-10">
         {/* Transactions & Balances Panel */}
         <div className="bg-white p-5 rounded-lg shadow-md w-[400px] h-[450px] flex flex-col">
@@ -116,22 +181,22 @@ const SellerPage = () => {
           <div className="overflow-y-auto flex-1">
             {activeTab === 'energy'
               ? energyTransactions.map((tx, index) => (
-                  <div key={index} className="p-2 border-b border-gray-200">
-                    {tx}
-                  </div>
-                ))
+                <div key={index} className="p-2 border-b border-gray-200">
+                  {tx}
+                </div>
+              ))
               : carbonTransactions.map((tx, index) => (
-                  <div key={index} className="p-2 border-b border-gray-200">
-                    {tx}
-                  </div>
-                ))
+                <div key={index} className="p-2 border-b border-gray-200">
+                  {tx}
+                </div>
+              ))
             }
           </div>
         </div>
 
         {/* Form Panel */}
-        <form 
-          onSubmit={handleSubmit} 
+        <form
+          onSubmit={handleSubmit}
           className="bg-white p-8 rounded-lg shadow-md w-[400px] h-[450px] flex flex-col justify-center"
         >
           {activeTab === 'energy' ? (
@@ -188,22 +253,20 @@ const SellerPage = () => {
                   <button
                     type="button"
                     onClick={() => setCarbonAction('Buy')}
-                    className={`px-4 py-2 rounded ${
-                      carbonAction === 'Buy'
+                    className={`px-4 py-2 rounded ${carbonAction === 'Buy'
                         ? 'bg-blue-600 text-white'
                         : 'bg-white text-blue-600 border border-blue-600'
-                    }`}
+                      }`}
                   >
                     Buy
                   </button>
                   <button
                     type="button"
                     onClick={() => setCarbonAction('Sell')}
-                    className={`px-4 py-2 rounded ${
-                      carbonAction === 'Sell'
+                    className={`px-4 py-2 rounded ${carbonAction === 'Sell'
                         ? 'bg-blue-600 text-white'
                         : 'bg-white text-blue-600 border border-blue-600'
-                    }`}
+                      }`}
                   >
                     Sell
                   </button>
@@ -224,9 +287,10 @@ const SellerPage = () => {
               </div>
             </>
           )}
-          <button onClick="" type="submit" className="w-full py-3 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700">
+          <button onClick={handleSubmit} type="submit" className="w-full py-3 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700">
             Submit
           </button>
+
         </form>
       </div>
     </div>

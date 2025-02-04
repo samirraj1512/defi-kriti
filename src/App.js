@@ -6,17 +6,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Web3 from 'web3';
 import OrderBook from './contracts/OrderBook.json';
 const web3 = new Web3(process.env.REACT_APP_CHAIN_LINK);
-
-// const getContract = async web3 => {
-//   const networkId = await web3.eth.net.getId();
-//   const network = OrderBook.networks[networkId];
-
-//   return new web3.eth.Contract{
-//     OrderBook.abi,
-//     network && network.
-//   }
-// }
-
 const deployedAddress = process.env.ORDER_BOOK_ADDRESS
 const myContract = new web3.eth.Contract(OrderBook , deployedAddress);
 myContract.handleRevert = true;
@@ -27,7 +16,10 @@ async function interact() {
   try {
     const myNumber = await myContract.methods.myNumber().call();
     console.log("myNumber value:", +myNumber);
-    
+    const reciept = await myContract.methods.setMyNumber(myNumber + 1n).send({
+      from:defaultAccount,
+
+    })
   } catch (error) {
     
   }
